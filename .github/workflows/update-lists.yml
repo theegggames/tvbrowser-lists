@@ -1,0 +1,52 @@
+name: Update block lists
+
+on:
+  schedule:
+    - cron: "17 3 * * *"          # every day at 03:17 UTC
+  workflow_dispatch:               # the "Run workflow" button
+    inputs:
+      force:
+        description: "Publish even if the lists did not change"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-lists
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache the Rust build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tools/tvshields/target
+          key: tvshields-${{ hashFiles('tools/tvshields/Cargo.lock', 'tools/tvshields/src/**') }}
+
+      - name: Rebuild, test and sign the lists
+        env:
+          FEED_PRIVATE_KEY: ${{ secrets.FEED_PRIVATE_KEY }}
+          FORCE: ${{ inputs.force && '1' || '' }}
+        run: ./tools/update_feed.sh
+
+      - name: Publish
+        run: |
+          if [ -n "$(git status --porcelain feed)" ]; then
+            git config user.name "block-list bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add feed
+            git commit -m "Block lists $(python3 -c "import json;m=json.load(open('feed/manifest.json'));print('v%s (%s)'%(m['version'],m['date']))")"
+            git push
+          else
+            echo "Nothing to publish."
+          fi
