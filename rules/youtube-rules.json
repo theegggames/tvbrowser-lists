@@ -1,9 +1,10 @@
 {
   "schema": 1,
-  "version": 2,
-  "note": "Edit this file on GitHub. max_level (0,1,2) is the kill switch for the YouTube ad levels and commit. The workflow signs and publishes it within minutes; apps pick it up within a day. Raise \"version\" with every change, or apps keep the old rules.",
+  "version": 4,
+  "note": "Edit this file on GitHub. max_level (0 to 3) is the kill switch for the YouTube ad levels; default_level is used by people who never chose a level themselves and commit. The workflow signs and publishes it within minutes; apps pick it up within a day. Raise \"version\" with every change, or apps keep the old rules.",
   "youtube": {
-    "max_level": 2,
+    "max_level": 3,
+    "default_level": 1,
     "ad_keys": ["adPlacements", "playerAds", "adSlots"],
     "never_cancel_hosts": ["youtube.com", "googlevideo.com", "ytimg.com", "youtube-nocookie.com"],
     "never_cancel": [
