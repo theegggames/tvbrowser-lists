@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": 4,
+  "version": 5,
   "note": "Edit this file on GitHub. max_level (0 to 3) is the kill switch for the YouTube ad levels; default_level is used by people who never chose a level themselves and commit. The workflow signs and publishes it within minutes; apps pick it up within a day. Raise \"version\" with every change, or apps keep the old rules.",
   "youtube": {
     "max_level": 3,
