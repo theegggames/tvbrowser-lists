@@ -42,14 +42,38 @@ if [ "$PREV_SIZE" -gt 0 ]; then
   [ $((SIZE * 100)) -ge $((PREV_SIZE * 70)) ] || { echo "New lists are under 70% of the published size: stopping."; exit 1; }
   [ $((SIZE * 100)) -le $((PREV_SIZE * 150)) ] || { echo "New lists are over 150% of the published size: stopping."; exit 1; }
 fi
-if [ "$SHA" = "$PREV_SHA" ] && [ -z "${FORCE:-}" ]; then echo "Lists did not change. Nothing to publish."; exit 0; fi
+
+# ---- the rules file (rules/youtube-rules.json): checked, hashed, and covered by the same signature as the lists
+RULES_SRC="$ROOT/rules/youtube-rules.json"
+RULES_JSON=""; RULES_SHA=""; RULES_VER=0; PREV_RULES_SHA=""; PREV_RULES_VER=0
+if [ -f "$FEED/manifest.json" ]; then
+  PREV_RULES_SHA=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('rules',{}).get('sha256',''))" "$FEED/manifest.json")
+  PREV_RULES_VER=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('rules',{}).get('version',0))" "$FEED/manifest.json")
+fi
+if [ -f "$RULES_SRC" ]; then
+  python3 "$ROOT/tools/check_rules.py" "$RULES_SRC"
+  RULES_VER=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['version'])" "$RULES_SRC")
+  RULES_SHA=$(sha256sum "$RULES_SRC" | cut -d' ' -f1); RULES_SIZE=$(wc -c < "$RULES_SRC")
+  if [ "$RULES_SHA" != "$PREV_RULES_SHA" ] && [ "$RULES_VER" -le "$PREV_RULES_VER" ]; then
+    echo "rules/youtube-rules.json changed but \"version\" is still $RULES_VER (published: $PREV_RULES_VER). Raise it, or apps ignore the change."; exit 1
+  fi
+  RULES_JSON=$(printf ',"rules":{"version":%s,"file":"rules.json","sha256":"%s","size":%s}' "$RULES_VER" "$RULES_SHA" "$RULES_SIZE")
+fi
+
+LISTS_CHANGED=1; [ "$SHA" = "$PREV_SHA" ] && [ -z "${FORCE:-}" ] && LISTS_CHANGED=""
+RULES_CHANGED=""; [ "$RULES_SHA" != "$PREV_RULES_SHA" ] && RULES_CHANGED=1
+if [ -z "$LISTS_CHANGED" ] && [ -z "$RULES_CHANGED" ]; then echo "Lists and rules did not change. Nothing to publish."; exit 0; fi
 
 echo "== 5/5 signing and writing the feed"
-VER=$((PREV_VER + 1)); DATE=$(date -u +%F)
-printf '{"version":%s,"format":"%s","file":"shields.dat","sha256":"%s","size":%s,"date":"%s"}' "$VER" "$FORMAT" "$SHA" "$SIZE" "$DATE" > "$WORK/manifest.json"
+# the list version only moves when the lists changed, so a rules-only change does not make every app download the lists again
+if [ -n "$LISTS_CHANGED" ]; then VER=$((PREV_VER + 1)); else VER=$PREV_VER; fi
+DATE=$(date -u +%F)
+printf '{"version":%s,"format":"%s","file":"shields.dat","sha256":"%s","size":%s,"date":"%s"%s}' "$VER" "$FORMAT" "$SHA" "$SIZE" "$DATE" "$RULES_JSON" > "$WORK/manifest.json"
 openssl dgst -sha256 -sign "$WORK/key.pem" "$WORK/manifest.json" | base64 -w0 > "$WORK/manifest.sig"
 base64 -d < "$WORK/manifest.sig" > "$WORK/sig.der"
 openssl dgst -sha256 -verify "$WORK/pub.pem" -signature "$WORK/sig.der" "$WORK/manifest.json" >/dev/null || { echo "signature check failed"; exit 1; }
 mkdir -p "$FEED"
-cp "$WORK/shields.dat" "$FEED/shields.dat"; cp "$WORK/manifest.sig" "$FEED/manifest.sig"; cp "$WORK/manifest.json" "$FEED/manifest.json"
-echo "Published version $VER ($DATE, $SIZE bytes)."
+if [ -n "$LISTS_CHANGED" ]; then cp "$WORK/shields.dat" "$FEED/shields.dat"; fi
+[ -f "$RULES_SRC" ] && cp "$RULES_SRC" "$FEED/rules.json"
+cp "$WORK/manifest.sig" "$FEED/manifest.sig"; cp "$WORK/manifest.json" "$FEED/manifest.json"
+echo "Published lists version $VER, rules version $RULES_VER ($DATE, $SIZE bytes of lists)."
