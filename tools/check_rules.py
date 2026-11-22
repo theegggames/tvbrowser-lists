@@ -23,8 +23,10 @@ def strlist(name, lst, rx, mx):
     if not isinstance(lst, list) or len(lst) > mx: fail("%s must be a list of at most %d entries" % (name, mx))
     for s in lst:
         if not isinstance(s, str) or not rx.match(s): fail("%s: bad entry %r" % (name, s))
-ml = yt.get("max_level", 2)
-if not isinstance(ml, int) or isinstance(ml, bool) or not 0 <= ml <= 2: fail("youtube.max_level must be 0, 1 or 2")
+ml = yt.get("max_level", 3)
+if not isinstance(ml, int) or isinstance(ml, bool) or not 0 <= ml <= 3: fail("youtube.max_level must be 0, 1, 2 or 3")
+dl = yt.get("default_level", 1)
+if not isinstance(dl, int) or isinstance(dl, bool) or not 0 <= dl <= 3: fail("youtube.default_level must be 0 to 3")
 strlist("youtube.ad_keys", yt.get("ad_keys", []), key_re, 30)
 if not yt.get("ad_keys"): fail("youtube.ad_keys must not be empty")
 strlist("youtube.never_cancel_hosts", yt.get("never_cancel_hosts", []), host_re, 40)
