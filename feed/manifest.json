@@ -1,1 +1,1 @@
-{"version":13,"format":"adblock-rust-0.13","file":"shields.dat","sha256":"4c5195b21aa0987ce84cf59c96df84511b8acaf2693d4ee627be03492eb5e79b","size":2824557,"date":"2026-11-22"}
+{"version":14,"format":"adblock-rust-0.13","file":"shields.dat","sha256":"0c830a03f2a2e898455a1e96fd1f105c280c6b9f1b08abc65507065cf98bbb73","size":2824605,"date":"2026-11-22","rules":{"version":2,"file":"rules.json","sha256":"d522c82a820dad89faf423a35307fb54b95917300fc2402a555dac3fdf0dec64","size":906}}

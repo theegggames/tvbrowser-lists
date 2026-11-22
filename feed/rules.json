@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "version": 2,
+  "note": "Edit this file on GitHub. max_level (0,1,2) is the kill switch for the YouTube ad levels and commit. The workflow signs and publishes it within minutes; apps pick it up within a day. Raise \"version\" with every change, or apps keep the old rules.",
+  "youtube": {
+    "max_level": 2,
+    "ad_keys": ["adPlacements", "playerAds", "adSlots"],
+    "never_cancel_hosts": ["youtube.com", "googlevideo.com", "ytimg.com", "youtube-nocookie.com"],
+    "never_cancel": [
+      { "host": "static.doubleclick.net", "path_contains": "ad_status" },
+      { "host": "googleads.g.doubleclick.net", "path_contains": "/pagead/id" },
+      { "host": "www.google.com", "path_contains": "/pagead/1p-user-list" },
+      { "host": "www.googleadservices.com", "path_contains": "/pagead/conversion" }
+    ]
+  },
+  "popups": {
+    "strikes_needed": 3,
+    "strike_window_min": 60
+  }
+}
