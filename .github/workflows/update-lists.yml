@@ -1,6 +1,9 @@
 name: Update block lists
 
 on:
+  push:
+    paths:
+      - "rules/**"                 # a rule edited on GitHub is signed and published within minutes
   schedule:
     - cron: "17 3 * * *"          # every day at 03:17 UTC
   workflow_dispatch:               # the "Run workflow" button
@@ -45,7 +48,8 @@ jobs:
             git config user.name "block-list bot"
             git config user.email "actions@users.noreply.github.com"
             git add feed
-            git commit -m "Block lists $(python3 -c "import json;m=json.load(open('feed/manifest.json'));print('v%s (%s)'%(m['version'],m['date']))")"
+            git commit -m "Feed: lists v$(python3 -c "import json;m=json.load(open('feed/manifest.json'));print('%s, rules v%s, %s'%(m['version'],m.get('rules',{}).get('version','-'),m['date']))")"
+            git pull --rebase --autostash      # a rule pushed while this run was working does not make the push fail
             git push
           else
             echo "Nothing to publish."
